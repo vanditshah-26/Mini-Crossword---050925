@@ -3,7 +3,7 @@
 This repository contains an interactive crossword puzzle recreated from an original grid.
 
 ## How to Play
-1. Open the [GitHub Pages link](https://vanditshah-26.github.io/crossword-puzzle/) once deployed.
+1. Open the [GitHub Pages link](https://vanditshah-26.github.io/mini-crossword---050925) once deployed.
 2. Click on any white square to start typing your answers.
 3. Use the **Clear** button if you want to reset the puzzle.
 
