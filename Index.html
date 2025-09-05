@@ -1,0 +1,33 @@
+<!DOCTYPE html><html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Interactive Crossword Puzzle</title>
+  <script src="https://unpkg.com/@crosswordlabs/crossword-generator"></script>
+</head>
+<body>
+  <h1>Crossword Puzzle</h1>
+  <div id="crossword"></div>
+  <script>
+    const crosswordData = {
+      across: [
+        { clue: "Slumber party attire, casually", answer: "PJS", row: 0, col: 1 },
+        { clue: "Surplus", answer: "EXTRA", row: 1, col: 2 },
+        { clue: "Bobby ___, co-founder of the Black Panthers", answer: "SEALE", row: 2, col: 0 },
+        { clue: "Soccer announcer's cry after a goal", answer: "GOAL", row: 3, col: 0 },
+        { clue: "Famous star-crossed lover", answer: "ROMEO", row: 4, col: 0 }
+      ],
+      down: [
+        { clue: "Substance inside early flat-screen TVs", answer: "PLASMA", row: 0, col: 1 },
+        { clue: "Famous star-crossed lover", answer: "JULIET", row: 0, col: 2 },
+        { clue: "Recorder in a courtroom", answer: "STENO", row: 0, col: 3 },
+        { clue: "'Hop aboard!'", answer: "ENTER", row: 1, col: 0 },
+        { clue: "'___, yes, ___!'", answer: "OHO", row: 0, col: 4 },
+        { clue: "D.C. baseball player", answer: "NAT", row: 2, col: 2 }
+      ]
+    };const crossword = new CrosswordGenerator.Crossword(crosswordData);
+document.getElementById("crossword").appendChild(crossword.render());
+
+  </script>
+</body>
+</html>
