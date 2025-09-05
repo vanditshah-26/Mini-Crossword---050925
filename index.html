@@ -17,13 +17,14 @@
       margin-bottom: 20px;
     }
     .cell {
+      position: relative;
       width: 40px;
       height: 40px;
       border: 1px solid #ccc;
-      text-align: center;
-      vertical-align: middle;
-      font-size: 18px;
-      text-transform: uppercase;
+      background: #fff;
+    }
+    .black {
+      background: black;
     }
     .cell input {
       width: 100%;
@@ -33,9 +34,16 @@
       font-size: 18px;
       text-transform: uppercase;
     }
-    .black {
-      background: black;
+    .number {
+      position: absolute;
+      top: 2px;
+      left: 2px;
+      font-size: 10px;
+      color: black;
     }
+    .correct { background: #d4edda; }
+    .incorrect { background: #f8d7da; }
+    .highlight { background: #fff3cd !important; } /* light yellow */
     #clues {
       display: flex;
       gap: 40px;
@@ -45,6 +53,10 @@
     }
     #clues ol {
       padding-left: 20px;
+      cursor: pointer;
+    }
+    #clues li.active {
+      background: #fff3cd;
     }
   </style>
 </head>
@@ -84,48 +96,135 @@
     const rows = 10, cols = 10;
     const grid = Array.from({ length: rows }, () => Array(cols).fill(null));
 
+    const allWords = [...crosswordData.across, ...crosswordData.down];
+    let clueNumber = 1;
+    const numbers = {};
+
     // Place words
-    crosswordData.across.forEach(({ answer, row, col }) => {
-      for (let i = 0; i < answer.length; i++) {
-        grid[row][col + i] = "";
+    allWords.forEach(word => {
+      const { answer, row, col } = word;
+      if (crosswordData.across.includes(word)) {
+        for (let i = 0; i < answer.length; i++) {
+          grid[row][col + i] = grid[row][col + i] || { answer: answer[i] };
+        }
+      } else {
+        for (let i = 0; i < answer.length; i++) {
+          grid[row + i][col] = grid[row + i][col] || { answer: answer[i] };
+        }
       }
-    });
-    crosswordData.down.forEach(({ answer, row, col }) => {
-      for (let i = 0; i < answer.length; i++) {
-        grid[row + i][col] = "";
+      if (!numbers[`${row},${col}`]) {
+        numbers[`${row},${col}`] = clueNumber++;
       }
+      word.number = numbers[`${row},${col}`]; // assign clue number
     });
 
     // Render grid
     const gridDiv = document.getElementById("grid");
+    const inputs = [];
     for (let r = 0; r < rows; r++) {
+      inputs[r] = [];
       for (let c = 0; c < cols; c++) {
         const cell = document.createElement("div");
         cell.classList.add("cell");
-        if (grid[r][c] !== null) {
+        const key = `${r},${c}`;
+        if (grid[r][c]) {
           const input = document.createElement("input");
           input.maxLength = 1;
+          input.dataset.row = r;
+          input.dataset.col = c;
+          input.dataset.answer = grid[r][c].answer;
+          input.addEventListener("input", e => {
+            const val = e.target.value.toUpperCase();
+            e.target.value = val;
+            if (val === "") {
+              e.target.classList.remove("correct", "incorrect");
+            } else if (val === e.target.dataset.answer) {
+              e.target.classList.add("correct");
+              e.target.classList.remove("incorrect");
+            } else {
+              e.target.classList.add("incorrect");
+              e.target.classList.remove("correct");
+            }
+          });
+          inputs[r][c] = input;
           cell.appendChild(input);
+          if (numbers[key]) {
+            const num = document.createElement("div");
+            num.classList.add("number");
+            num.textContent = numbers[key];
+            cell.appendChild(num);
+          }
         } else {
+          inputs[r][c] = null;
           cell.classList.add("black");
         }
         gridDiv.appendChild(cell);
       }
     }
 
-    // Render clues
-    const acrossList = document.getElementById("across-clues");
-    crosswordData.across.forEach(({ clue }) => {
-      const li = document.createElement("li");
-      li.textContent = clue;
-      acrossList.appendChild(li);
+    // Highlighting helpers
+    function clearHighlights() {
+      document.querySelectorAll(".highlight").forEach(el => el.classList.remove("highlight"));
+      document.querySelectorAll("#clues li").forEach(li => li.classList.remove("active"));
+    }
+    function highlightWord(word, listItem) {
+      clearHighlights();
+      const { answer, row, col } = word;
+      if (crosswordData.across.includes(word)) {
+        for (let i = 0; i < answer.length; i++) inputs[row][col + i]?.classList.add("highlight");
+      } else {
+        for (let i = 0; i < answer.length; i++) inputs[row + i][col]?.classList.add("highlight");
+      }
+      listItem.classList.add("active");
+    }
+
+    // Keyboard navigation
+    document.addEventListener("keydown", e => {
+      const active = document.activeElement;
+      if (active.tagName !== "INPUT") return;
+      const row = parseInt(active.dataset.row);
+      const col = parseInt(active.dataset.col);
+      const moveFocus = (r, c) => {
+        if (r >= 0 && r < rows && c >= 0 && c < cols && inputs[r][c]) inputs[r][c].focus();
+      };
+      if (e.key === "ArrowUp") { e.preventDefault(); moveFocus(row - 1, col); }
+      else if (e.key === "ArrowDown") { e.preventDefault(); moveFocus(row + 1, col); }
+      else if (e.key === "ArrowLeft") { e.preventDefault(); moveFocus(row, col - 1); }
+      else if (e.key === "ArrowRight") { e.preventDefault(); moveFocus(row, col + 1); }
+      else if (e.key === "Backspace" && active.value === "") { e.preventDefault(); moveFocus(row, col - 1); }
+      else if (/^[A-Za-z]$/.test(e.key)) { setTimeout(() => moveFocus(row, col + 1), 50); }
     });
 
-    const downList = document.getElementById("down-clues");
-    crosswordData.down.forEach(({ clue }) => {
-      const li = document.createElement("li");
-      li.textContent = clue;
-      downList.appendChild(li);
+    // Render clues with click events
+    function renderClues(listEl, words) {
+      words.forEach(word => {
+        const li = document.createElement("li");
+        li.textContent = `${word.number}. ${word.clue}`;
+        li.addEventListener("click", () => {
+          highlightWord(word, li);
+          // focus first letter
+          inputs[word.row][word.col].focus();
+        });
+        listEl.appendChild(li);
+        word.listItem = li; // store reference
+      });
+    }
+    renderClues(document.getElementById("across-clues"), crosswordData.across);
+    renderClues(document.getElementById("down-clues"), crosswordData.down);
+
+    // Auto-highlight clue when input is focused
+    gridDiv.addEventListener("focusin", e => {
+      if (e.target.tagName !== "INPUT") return;
+      const r = parseInt(e.target.dataset.row);
+      const c = parseInt(e.target.dataset.col);
+      const word = allWords.find(w => {
+        if (crosswordData.across.includes(w)) {
+          return w.row === r && c >= w.col && c < w.col + w.answer.length;
+        } else {
+          return w.col === c && r >= w.row && r < w.row + w.answer.length;
+        }
+      });
+      if (word) highlightWord(word, word.listItem);
     });
   </script>
 </body>
