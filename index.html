@@ -1,13 +1,67 @@
-<!DOCTYPE html><html lang="en">
+<!DOCTYPE html>
+<html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Interactive Crossword Puzzle</title>
-  <script src="https://cdn.jsdelivr.net/gh/jweisbeck/Crossword/crossword.min.js"></script>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      padding: 20px;
+    }
+    #grid {
+      display: grid;
+      grid-template-columns: repeat(10, 40px);
+      grid-template-rows: repeat(10, 40px);
+      gap: 2px;
+      margin-bottom: 20px;
+    }
+    .cell {
+      width: 40px;
+      height: 40px;
+      border: 1px solid #ccc;
+      text-align: center;
+      vertical-align: middle;
+      font-size: 18px;
+      text-transform: uppercase;
+    }
+    .cell input {
+      width: 100%;
+      height: 100%;
+      border: none;
+      text-align: center;
+      font-size: 18px;
+      text-transform: uppercase;
+    }
+    .black {
+      background: black;
+    }
+    #clues {
+      display: flex;
+      gap: 40px;
+    }
+    #clues h3 {
+      margin-bottom: 5px;
+    }
+    #clues ol {
+      padding-left: 20px;
+    }
+  </style>
 </head>
 <body>
   <h1>Crossword Puzzle</h1>
-  <div id="crossword"></div>
+  <div id="grid"></div>
+  <div id="clues">
+    <div>
+      <h3>Across</h3>
+      <ol id="across-clues"></ol>
+    </div>
+    <div>
+      <h3>Down</h3>
+      <ol id="down-clues"></ol>
+    </div>
+  </div>
+
   <script>
     const crosswordData = {
       across: [
@@ -25,9 +79,54 @@
         { clue: "'___, yes, ___!'", answer: "SIR", row: 0, col: 4 },
         { clue: "D.C. baseball player", answer: "NAT", row: 2, col: 2 }
       ]
-    };const crossword = new CrosswordGenerator.Crossword(crosswordData);
-document.getElementById("crossword").appendChild(crossword.render());
+    };
 
+    const rows = 10, cols = 10;
+    const grid = Array.from({ length: rows }, () => Array(cols).fill(null));
+
+    // Place words
+    crosswordData.across.forEach(({ answer, row, col }) => {
+      for (let i = 0; i < answer.length; i++) {
+        grid[row][col + i] = "";
+      }
+    });
+    crosswordData.down.forEach(({ answer, row, col }) => {
+      for (let i = 0; i < answer.length; i++) {
+        grid[row + i][col] = "";
+      }
+    });
+
+    // Render grid
+    const gridDiv = document.getElementById("grid");
+    for (let r = 0; r < rows; r++) {
+      for (let c = 0; c < cols; c++) {
+        const cell = document.createElement("div");
+        cell.classList.add("cell");
+        if (grid[r][c] !== null) {
+          const input = document.createElement("input");
+          input.maxLength = 1;
+          cell.appendChild(input);
+        } else {
+          cell.classList.add("black");
+        }
+        gridDiv.appendChild(cell);
+      }
+    }
+
+    // Render clues
+    const acrossList = document.getElementById("across-clues");
+    crosswordData.across.forEach(({ clue }) => {
+      const li = document.createElement("li");
+      li.textContent = clue;
+      acrossList.appendChild(li);
+    });
+
+    const downList = document.getElementById("down-clues");
+    crosswordData.down.forEach(({ clue }) => {
+      const li = document.createElement("li");
+      li.textContent = clue;
+      downList.appendChild(li);
+    });
   </script>
 </body>
 </html>
