@@ -15,4 +15,4 @@ This repository contains an interactive crossword puzzle recreated from an origi
 5. Under **Source**, choose:
    - Branch: `main`
    - Folder: `/ (root)`
-6. Save, and your crossword will be live at:
+6. Save, and your crossword will be live at: https://vanditshah-26.github.io/mini-crossword---050925
